@@ -290,4 +290,10 @@ public class Dictionary {
         if (lo<j) quicksort(a, lo, j);
         if (i<hi) quicksort(a, i, hi);
     }
+    
+    private boolean isPermutation(String a, String b) 
+    {
+		return false;
+    	
+    }
 }
