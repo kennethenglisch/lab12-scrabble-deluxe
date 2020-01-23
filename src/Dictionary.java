@@ -1,293 +1,310 @@
-import java.io.CharConversionException;	
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Map.Entry;
+import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Dictionary {
 
-	public Hashtable<Integer, ArrayList<String>> dictionary;
-	public HashMap<Integer, ArrayList<String>> dictionary_map;
-//	private File words_file;
+	private Hashtable<String, LinkedList<String>> dictionary;
 	private Scanner scanner;
-	
-	public static void main(String[] args) 
-	{
+	private String regex_7_letters = "\\b[a-z]{7}\\b";
+	private String searchWord;
+	boolean noWord = true;
+
+	public static void main(String[] args) {
+		long startTime = System.nanoTime();
 		new Dictionary();
-	}
-	
-	public Dictionary() 
-	{
-//		readFile("./word-list-master/common-7-letter-words.txt");
-//		readFile("/Users/kenneth/eclipse-workspace/lab11-scrabble-basic/word-lists-master/common-7-letter-words.txt");
+		long endTime = System.nanoTime();
+		long duration = endTime - startTime;
+		System.out.println("\nDuration: " + duration + " nano-seconds");
 		
-		dictionary = new Hashtable<Integer, ArrayList<String>>();
-		dictionary_map = new HashMap<Integer, ArrayList<String>>();
+	}
+
+	public Dictionary() {
+		dictionary = new Hashtable<String, LinkedList<String>>();
 		readFile("./collins-scrabble-words.txt");
-//		fillMap();
-//		fillMapVer2();
-//		statistics();
-//		statisticsVer2();
-//		System.out.println(dictionary.size());
+		fillMap();	
+//		search("LACKERS");
 		
-		quicksortWord("Perfect");
-		
-//		String[] words = searchForWord("PerfECt");
-		
-//		for (int i = 0; i < words.length; i++)
-//			System.out.println(words[i]);
-	}
-	
-	private void statistics() 
-	{
-		Enumeration<ArrayList<String>> enu = dictionary.elements();
-		
-		while (enu.hasMoreElements()) 
+		long stepCounter = 0;
+		while (noWord) 
 		{
-			ArrayList<String> list = enu.nextElement();
-			System.out.println("\nElements in this list:");
-			System.out.println("Chain of: " + list.size() + " \n");
-			for(int i = 0; i < list.size(); i++)
-				System.out.println(list.get(i));
-			
-			System.out.println("\n--------------------------");
+			stepCounter++;
+			searchWord = selectSevenLetters();
+			search(searchWord);
 		}
+		
+		System.out.println("We needed '" + stepCounter + "' to find a permutation\n for the random generated letters.");
 	}
-	
-	private void statisticsVer2() 
-	{
-		System.out.println(dictionary_map.size());
-		
-		dictionary_map.keySet()
-					  .iterator()
-		              .forEachRemaining(key -> System.out.println(key + "=" + dictionary_map.get(key)));
-		
-		
+
+	private void statistics(int c, int d, int col) {
+		int largest = 1;
+		int position = 0;
+		int counter = 0;
+		int words = c;
+		int duplicates = d;
+		int collisions = col;
+		String element = "";
+		Enumeration<LinkedList<String>> enu = dictionary.elements();
+
+		while (enu.hasMoreElements()) {
+			LinkedList<String> list = enu.nextElement();
+			/*System.out.println("\nElements in this list:");
+			System.out.println("Chain of: " + list.size());
+			for (int i = 0; i < list.size(); i++)
+				System.out.println(list.get(i));
+			System.out.println("\n--------------------------");*/
+			if(Integer.compare(largest, list.size())<0) {
+				largest = list.size();	
+				position = counter;
+				element = list.getFirst();
+			}
+			counter++;
+		}
+		System.out.println("Words in the dictionary: " + words);
+		System.out.println("\nDuplicates found: " + duplicates);
+		System.out.println("\nSize of the Hashtable: " + counter);
+		System.out.println("\nCollisions appeared: " + collisions);
+		System.out.println("\nLargest chain: " + largest + " -> Key: " + position + " / " + element + "\n");
+		System.out.println("<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>\n");
 	}
 
 	/**
 	 * Method reading in the file
+	 * 
 	 * @param pathname String representing the path of the file
 	 */
-	private void readFile(String pathname) 
-	{	
+	private void readFile(String pathname) {
 		try {
 			scanner = new Scanner(new File(pathname), StandardCharsets.UTF_8.name());
-			System.out.println("File reading successfully.");
-		} 
-		catch (Exception e) {
+			System.out.println("------------------------------");
+			System.out.println("| File reading successfully. |");
+			System.out.println("------------------------------");
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private void fillMap()
-	{
+
+	private void fillMap() {
 		int counter = 0;
-		String regex_7_letters = "\\b[a-z]{7}\\b";
-		
-		while (scanner.hasNext()) 
-		{
+		int duplicates = 0;
+		int collisions = 0;
+
+		while (scanner.hasNext()) {
 			String word = scanner.next();
 			word = word.toLowerCase();
-			
-			if(word.matches(regex_7_letters))
-			{
-				int value = getNumericValue(word);
-				
+
+			if (word.matches(regex_7_letters)) {
+				String key = quicksortWord(word);	
+
 				// getting and remembering the value of the word in the list
-				ArrayList<String> dic_words = dictionary.get(value);
-				
-				if (dic_words == null) 
-				{
+				LinkedList<String> dic_words = dictionary.get(key);
+
+				if (dic_words == null) {
 					// creating a new ArrayList<String>
-					ArrayList<String> words_list = new ArrayList<>();
-					
+					LinkedList<String> words_list = new LinkedList<>();
+
 					// adding the word into this ArrayList
-					words_list.add(word);
-					
-					// putting the ArrayList into the dictionary hash table with numericValue of word as key 
-					dictionary.put(value, words_list);
-				}
-				else 
-				{
-					dic_words.add(word);
-					dictionary.put(value, dic_words);
+					words_list.addFirst(word);
+
+					// putting the ArrayList into the dictionary hash table with numericValue of
+					// word as key
+					dictionary.put(key, words_list);
+				} else {
+					if (!dic_words.contains(word)) {
+						dic_words.addFirst(word);
+						dictionary.put(key, dic_words);
+						collisions++;
+					}else
+						duplicates++;
 				}
 				counter++;
 			}
 		}
+		statistics(counter, duplicates, collisions);
+	}
+
+
+	private void search(String search_word) 
+	{
+		String[] words = searchForWord(search_word);
 		
-		System.out.println(counter);
+		if (words != null)
+			printWords(words);
 	}
 	
-	private void fillMapVer2()
-	{
-		int counter = 0;
-		String regex_7_letters = "\\b[a-z]{7}\\b";
-		
-		while (scanner.hasNext()) 
-		{
-			String word = scanner.next();
-			word = word.toLowerCase();
-			
-			if(word.matches(regex_7_letters))
-			{
-				int value = getNumericValueVer2(word);
-				
-				// getting and remembering the value of the word in the list
-				ArrayList<String> dic_words = dictionary_map.get(value);
-				
-				if (dic_words == null) 
-				{
-					// creating a new ArrayList<String>
-					ArrayList<String> words_list = new ArrayList<>();
-					
-					// adding the word into this ArrayList
-					words_list.add(word);
-					
-					// putting the ArrayList into the dictionary hash table with numericValue of word as key 
-					dictionary_map.put(value, words_list);
-				}
-				else 
-				{
-					dic_words.add(word);
-					dictionary_map.put(value, dic_words);
-				}
-				counter++;
-			}
-		}
-		System.out.println(counter);
-	}
-	
-	private int getNumericValue(String word) 
-	{
-		int value = 0;
-		
-		for (int i = 0; i < word.length(); i++) 
-		{
-			value += Character.getNumericValue(word.charAt(i));
-		}
-		
-		return value;
-	}
-	
-	/**
-	 * K(m) = k % m
-	 * m = Anzahl der Wörter (34343 * 2) -> 68686 -> nächst größere Primzahl -> 
-	 * m = 68687
-	 */
-	private int getNumericValueVer2(String word) 
-	{
-		int value = 0;
-		int length = word.length();
-		
-		for (int i = 0, j = length - 1; i < length; i++, j--) 
-		{
-			value = (int) (value + (( Character.getNumericValue(word.charAt(i)) - 97 ) * Math.pow(26, j)));
-		}
-		
-		return value * 100 % 68687;
-	}
-	
-	private String[] searchForWord(String search_word) 
-	{
+	private String[] searchForWord(String search_word) {
 		search_word = search_word.toLowerCase();
-		
-		if (search_word.length() != 7) 
-		{
-			System.out.println("You should enter a word that has exactly 7 letters.");
+
+		if (!search_word.matches(regex_7_letters)) {
+			System.out.println("You should enter a word that has exactly 7 letters and does not contain a number, any special characters or a blank.");
 			return null;
 		}
 		
-		int value = getNumericValue(search_word);
+		System.out.println("Searching Word: " + search_word + "\n");
+		String new_word = quicksortWord(search_word);
 		
 		String[] words;
-		
-		ArrayList<String> words_list = dictionary.get(value);
+		LinkedList<String> words_list = dictionary.get(new_word);
 		
 		if (words_list == null) 
 		{
 			System.out.println("There is no word for you.");
+			noWord = true;
 			return null;
-		}
-		else 
-		{
+		} else {
+			noWord = false;
 			int size = words_list.size();
 			words = new String[size];
 			
-			for(int i = 0; i < size; i++)
+			for (int i = 0; i < size; i++) 
 				words[i] = words_list.get(i);
 		}
-		
 		return words;
 	}
 	
-	private String quicksortWord(String word) 
+	
+	private void printWords(String[] words) 
 	{
+		
+		System.out.println("Found Words: \n");
+		for (int i = 0; i < words.length; i++)
+			System.out.println(words[i]);
+		
+		/*
+		 * How it would look like if we would use isPermutation.
+		 * 
+		 * We don't need to use this, because we already used chains 
+		 * that only contain permutations.
+		 */
+		
+		/*
+			System.out.println("Found Words: \n");
+			for (int i = 0; i < words.length; i++)
+				if(isPermutation(searchWord, words[i]))
+					System.out.println(words[i]);
+		*/
+	}
+
+	private String quicksortWord(String word) {
 		int length = word.length();
 		word = word.toLowerCase();
 		int[] characters = new int[length];
-		System.out.println("Word: " + word);
-		
-		for (int i = 0; i < length; i++) 
+//		System.out.println("Word: " + word);
+
+		for (int i = 0; i < length; i++)
 			characters[i] = word.charAt(i);
-		
-		System.out.println("Non ordered");
-		for (int i = 0; i < characters.length; i++)
-			System.out.println(characters[i]);
-		
-		quicksort(characters, 0, 6);
-		
+
+//		System.out.println("Non ordered");
+//		for (int i = 0; i < characters.length; i++)
+//			System.out.println(characters[i]);
+
+		quicksort(characters, 0, word.length()-1);
+
 		String new_word = "";
-		System.out.println("Ordered");
+//		System.out.println("Ordered");
 		for (int i = 0; i < characters.length; i++) {
-			System.out.println(characters[i]);
+//			System.out.println(characters[i]);
 			new_word += (char) (characters[i]);
 		}
-			
-		System.out.println("New Word:" + new_word);
-		
+
+//		System.out.println("New Word:" + new_word);
+
 		return new_word;
 	}
-	
+
 	/**
 	 * @credits WW
 	 * @credits https://moodle.htw-berlin.de/pluginfile.php/791655/mod_resource/content/1/QuickSorter.java
 	 */
-	private void exchange(int[] a, int i, int j)
+	private void exchange(int[] a, int i, int j) {
+		int t = a[i];
+		a[i] = a[j];
+		a[j] = t;
+	}
+
+	/**
+	 * @credits WW
+	 * @credits https://moodle.htw-berlin.de/pluginfile.php/791655/mod_resource/content/1/QuickSorter.java
+	 */
+	private void quicksort(int[] a, int lo, int hi) {
+		// partition
+		int i = lo, j = hi;
+		int x = a[(lo + hi) / 2];
+
+		while (i <= j) {
+			while (a[i] < x)
+				i++;
+			while (a[j] > x)
+				j--;
+			if (i <= j) {
+				exchange(a, i, j);
+				i++;
+				j--;
+			}
+		}
+
+		// recurr
+		if (lo < j)
+			quicksort(a, lo, j);
+		if (i < hi)
+			quicksort(a, i, hi);
+	}
+
+    
+    private boolean isPermutation(String a, String b) 
     {
-        int t=a[i];
-        a[i]=a[j];
-        a[j]=t;
+    	int sizeA = a.length();
+    	int sizeB = b.length();
+    	
+    	a = a.toLowerCase();
+    	b = b.toLowerCase();
+    	
+    	/*
+    	 * If the Strings don't have the same length,
+    	 * they can't be a permutation.
+    	 */
+    	if (sizeA != sizeB)
+    		return false;
+    	
+    	/**
+    	 * Could use our quicksort method to do this task,
+    	 * but it's quicker to do it that way.
+    	 */
+    	char[] wordA = a.toCharArray();
+    	char[] wordB = b.toCharArray();
+    	
+    	/*
+    	 * Sorting the Arrays so it is easy to check them.
+    	 */
+    	Arrays.sort(wordA);
+    	Arrays.sort(wordB);
+    	
+    	/*
+    	 * If the Letters at the same index of both Arrays 
+    	 * aren't the same, it's not a permutation.
+    	 */
+    	for(int i = 0; i < wordA.length; i++)
+    		if (wordA[i] != wordB[i])
+    			return false;
+    	
+		return true;
     }
-
-	/**
-	 * @credits WW
-	 * @credits https://moodle.htw-berlin.de/pluginfile.php/791655/mod_resource/content/1/QuickSorter.java
-	 */
-    private void quicksort (int[] a, int lo, int hi)
+    
+    private String selectSevenLetters() 
     {
-    	  // partition
-        int i=lo, j=hi;
-        int x=a[(lo+hi)/2];
-
-        while (i<=j)
-        {    
-            while (a[i]<x) i++; 
-            while (a[j]>x) j--;
-            if (i<=j)
-            {
-                exchange(a, i, j);
-                i++; j--;
-            }
-        }
-
-        // recurr
-        if (lo<j) quicksort(a, lo, j);
-        if (i<hi) quicksort(a, i, hi);
+    	String searchWord = "";
+    	char[] alphabet = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+    	
+    	Random random = new Random();
+    	
+    	for (int i = 0; i < 7; i++)
+    		searchWord += alphabet[random.nextInt(26)];
+    	
+    	return searchWord;
     }
 }
