@@ -11,7 +11,7 @@ public class Dictionary {
 
 	private Hashtable<String, LinkedList<String>> dictionary;
 	private Scanner scanner;
-	private String regex_7_letters = "\\b[a-z]{7}\\b";
+	private String regex_7_letters = "\\b[a-z]{1,7}\\b";
 	private String searchWord;
 	boolean noWord = true;
 
@@ -20,7 +20,8 @@ public class Dictionary {
 		new Dictionary();
 		long endTime = System.nanoTime();
 		long duration = endTime - startTime;
-		System.out.println("\nDuration: " + duration + " nano-seconds");
+		System.out.println("<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>\n");
+		System.out.println("Duration: " + duration + " nano-seconds");
 		
 	}
 
@@ -28,9 +29,11 @@ public class Dictionary {
 		dictionary = new Hashtable<String, LinkedList<String>>();
 		readFile("./collins-scrabble-words.txt");
 		fillMap();	
-//		search("LACKERS");
+		run();
+		//search("LACKERS");
 		
-		long stepCounter = 0;
+		
+		/*long stepCounter = 0;
 		while (noWord) 
 		{
 			stepCounter++;
@@ -38,7 +41,16 @@ public class Dictionary {
 			search(searchWord);
 		}
 		
-		System.out.println("We needed '" + stepCounter + "' to find a permutation\n for the random generated letters.");
+		System.out.println("We needed '" + stepCounter + "' to find a permutation\nfor the random generated letters.");*/
+	}
+	
+	private void run() {
+		String str = selectSevenLetters();
+		Word_nCr word = new Word_nCr(str);
+		LinkedList <String> list = word.getList();
+		for(String w : list) {
+			search(w);
+		}
 	}
 
 	private void statistics(int c, int d, int col) {
@@ -133,8 +145,10 @@ public class Dictionary {
 	{
 		String[] words = searchForWord(search_word);
 		
-		if (words != null)
+		if (words != null) {
+			System.out.println("Searching Word: " + search_word);
 			printWords(words);
+		}
 	}
 	
 	private String[] searchForWord(String search_word) {
@@ -145,7 +159,7 @@ public class Dictionary {
 			return null;
 		}
 		
-		System.out.println("Searching Word: " + search_word + "\n");
+		//System.out.println("Searching Word: " + search_word + "\n");
 		String new_word = quicksortWord(search_word);
 		
 		String[] words;
@@ -153,7 +167,7 @@ public class Dictionary {
 		
 		if (words_list == null) 
 		{
-			System.out.println("There is no word for you.");
+			//System.out.println("There is no word for you. \n");
 			noWord = true;
 			return null;
 		} else {
@@ -171,9 +185,11 @@ public class Dictionary {
 	private void printWords(String[] words) 
 	{
 		
-		System.out.println("Found Words: \n");
+		System.out.println("Found Words: ");
 		for (int i = 0; i < words.length; i++)
 			System.out.println(words[i]);
+		
+		System.out.println();
 		
 		/*
 		 * How it would look like if we would use isPermutation.
@@ -304,6 +320,8 @@ public class Dictionary {
     	
     	for (int i = 0; i < 7; i++)
     		searchWord += alphabet[random.nextInt(26)];
+    	
+    	System.out.println("Generated word: " + searchWord + "\n");
     	
     	return searchWord;
     }
