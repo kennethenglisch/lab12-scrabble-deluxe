@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.LinkedList;
 
 public class Word_nCr {
@@ -14,19 +13,16 @@ public class Word_nCr {
 	public Word_nCr(String inputstring) {
 		this.inputstring = inputstring;
 		nCr(0);
-		System.out.println(bag);
 	}
 	
-	/*
-	 * https://javahungry.blogspot.com/2014/02/algorithm-for-combinations-of-string-java-code-with-example.html
-	 */
-	private void nCr(int start) {
-		for (int i = start; i < inputstring.length(); i++) {
+
+	private void nCr(int position) {
+		for (int i = position; i < inputstring.length(); i++) {
 			output += inputstring.charAt(i);
-			if (!bag.contains(output.toString())&& output.length()>1) 
-				bag.add(output.toString());
+			if (!bag.contains(output) && output.length()>1) 
+				bag.addFirst(output);
 			if (i < inputstring.length())
-				nCr(i + 1);
+				nCr(i+1);
 			output = output.substring(0, (output.length() - 1));
 		}
 		
