@@ -29,7 +29,7 @@ public class Dictionary {
 		readFile("./collins-scrabble-words.txt");
 		fillMap();	
 		run();
-		//search("LACKERS");
+//		search("LACKERS");
 		
 		
 		/*long stepCounter = 0;
