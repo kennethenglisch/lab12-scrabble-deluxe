@@ -12,7 +12,7 @@ public class Dictionary {
 	private Hashtable<String, LinkedList<String>> dictionary;
 	private Scanner scanner;
 	private String regex_7_letters = "\\b[a-z]{1,7}\\b";
-	private String searchWord;
+//	private String searchWord;
 	boolean noWord = true;
 
 	public static void main(String[] args) {
